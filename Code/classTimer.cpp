@@ -20,6 +20,8 @@ class Timer
 		{
 			boxWidth = 100, boxHeight = 80;
 			boxX = screenWidth/2 - boxWidth/2, boxY = screenHeight/2 - boxHeight/2;
+			x = boxX;
+			y = boxY;
 			timeEntered = false;
 		}			
 
@@ -30,15 +32,27 @@ class Timer
 			DrawText(timeText.c_str(), x, y, 50, BLACK);
 		}
 
-		void getTimerLength()
+		void getTimerLength(int screenWidth, int screenheight)
 		{
 			while (!timeEntered)
 			{
 				try
 				{
-					std::cout << "Enter a timer length: ";
+					std::cout << "Enter a timer length: " << std::endl;
 					std::cin >> time;
 					timeText = std::to_string(time);
+					
+					int textWidth = MeasureText(timeText.c_str(), 50);
+					
+					//Update Box Size 
+					boxX = boxX + boxWidth/2;
+					boxWidth = textWidth + 20;
+					boxX = boxX - boxWidth/2;
+
+					//Update Text position
+					x = boxX + (boxWidth - textWidth)/2;
+					y = boxY + (boxHeight - 50)/2;
+					timeEntered = true;
 				}
 				catch(std::string e)
 				{
@@ -61,7 +75,7 @@ class Timer
 			boxWidth, boxHeight,
 			boxX, boxY,
 			x, y;
-		double time;		
+		int time;		
 		std::string timeText;
 		bool timeEntered;
 };
@@ -72,6 +86,20 @@ class Button
 		virtual ~Button() = default;
 		virtual void Draw() = 0;
 
+		int getWidth() { return width;}
+		int getHeight() { return height;}
+		void changeWidth(std::string newWidth) 
+		{
+			int tempTextWidth = MeasureText(newWidth.c_str(), 20);
+			width = tempTextWidth + 20;
+			x = x - tempTextWidth/2;
+		}
+		void changeHeight(std::string newHeight)
+		{
+			int tempTextHeight= MeasureText(newHeight.c_str(), 20);
+			height = tempTextHeight + 20;
+		}
+		
 	protected:
 		int width,
 		    height,
@@ -79,7 +107,7 @@ class Button
 		    y;
 };
 
-class TimeButton : protected Button
+class TimeButton : public Button
 {
 	public:
 		TimeButton(int newTime, int newWidth, int newHeight, int newX, int newY)
@@ -101,11 +129,12 @@ class TimeButton : protected Button
 
 };
 
-class ActionButton : protected Button
+class ActionButton : public Button
 {
 	public:
 		ActionButton(std::string newText, int newWidth, int newHeight, int newX, int newY)
 		{
+			std::cout << MeasureText(newText.c_str(), 20) << std::endl;
 			width = newWidth;
 			height = newHeight;
 			x = newX;
@@ -113,13 +142,27 @@ class ActionButton : protected Button
 			text = newText;
 		}
 
+		void changeWidth(std::string newWidth) 
+		{
+			int tempTextWidth = MeasureText(newWidth.c_str(), 20);
+			width = tempTextWidth + 20;
+			x = x + tempTextWidth/2;
+			textWidth = tempTextWidth;
+		}
+		void changeHeight(std::string newHeight) 
+		{
+			int tempTextHeight= MeasureText(newHeight.c_str(), 20);
+			height = tempTextHeight + 20;
+		}
 		void Draw() override
 		{
 			DrawRectangle(x, y, width, height, BLACK);
+			DrawText(text.c_str(), x + textWidth/16, y+10, 20, WHITE); 
 		}
 
 	private:
 		std::string text;
+		int textWidth;
 };
 
 //Functions 
@@ -129,10 +172,10 @@ void DrawWindow(Color color, std::shared_ptr<Timer>& timer, std::shared_ptr<Acti
 
 	//Draw Buttons and Timer
 	//Timer
-	timer->
 	timer->Draw();
 	//Time Buttons 
 	//Action Button
+	startStop->Draw();
 }
 
 
@@ -149,10 +192,12 @@ int main()
 	std::shared_ptr <ActionButton> startStop = std::make_shared<ActionButton>("Start/Stop", 50, 50, stopStartPos.first, stopStartPos.second);
 	std::vector<std::shared_ptr<TimeButton>> timeButtons;
 
-	//timer->getTimerLength();
 
 	InitWindow(screenWidth, screenHeight, "Class Timer");
 	SetTargetFPS(60);
+
+	timer->getTimerLength(screenWidth, screenHeight);
+	startStop->changeWidth("Start/Stop");
 
 	while (!WindowShouldClose())
 	{
