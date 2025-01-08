@@ -16,7 +16,7 @@
 class Timer
 {
 	public:
-		Timer(int screenWidth, int screenHeight, double timerLength)
+		Timer(int screenWidth, int screenHeight)
 		{
 			boxWidth = 100, boxHeight = 80;
 			boxX = screenWidth/2 - boxWidth/2, boxY = screenHeight/2 - boxHeight/2;
@@ -27,7 +27,7 @@ class Timer
 		{
 			DrawRectangle(boxX, boxY, boxWidth, boxHeight, GRAY);
 			DrawRectangleLines(boxX, boxY, boxWidth, boxHeight, BLACK);
-			DrawText(timeText, x, y, 50, BLACK);
+			DrawText(timeText.c_str(), x, y, 50, BLACK);
 		}
 
 		void getTimerLength()
@@ -38,7 +38,7 @@ class Timer
 				{
 					std::cout << "Enter a timer length: ";
 					std::cin >> time;
-					timeText = std::to_string(time).c_str();
+					timeText = std::to_string(time);
 				}
 				catch(std::string e)
 				{
@@ -48,13 +48,21 @@ class Timer
 			}
 		}
 
+		int getX() { return x;}
+		int getY() { return y;}
+		int getBoxX() { return boxX;}
+		int getBoxY() { return boxY;}
+		int getBoxWidth() { return boxWidth;}
+		int getBoxHeight() { return boxHeight;}
+			
+
 	private:
 		int 
 			boxWidth, boxHeight,
 			boxX, boxY,
 			x, y;
 		double time;		
-		const char* timeText;
+		std::string timeText;
 		bool timeEntered;
 };
 
@@ -83,6 +91,11 @@ class TimeButton : protected Button
 			y = newY;
 		}
 
+		void Draw() override
+		{
+			DrawRectangle(x, y, width, height, WHITE);
+		}
+
 	private:
 		int time;
 
@@ -91,13 +104,18 @@ class TimeButton : protected Button
 class ActionButton : protected Button
 {
 	public:
-		ActionButton(int newText, int newWidth, int newHeight, int newX, int newY)
+		ActionButton(std::string newText, int newWidth, int newHeight, int newX, int newY)
 		{
 			width = newWidth;
 			height = newHeight;
 			x = newX;
 			y = newY;
 			text = newText;
+		}
+
+		void Draw() override
+		{
+			DrawRectangle(x, y, width, height, BLACK);
 		}
 
 	private:
@@ -111,6 +129,8 @@ void DrawWindow(Color color, std::shared_ptr<Timer>& timer, std::shared_ptr<Acti
 
 	//Draw Buttons and Timer
 	//Timer
+	timer->
+	timer->Draw();
 	//Time Buttons 
 	//Action Button
 }
@@ -124,18 +144,23 @@ int main()
 	const int screenWidth = 1000, screenHeight = 800;
 	const int timerBoxWidth = 100, timerBoxHeight = 80;
 	const int timerBoxX = screenWidth/2 - timerBoxWidth/2, timerBoxY = screenHeight/2 - timerBoxHeight/2;
-	std::pair<int,int> stopStartPos = {timer->getX + timer->getBoxWidth() + 30, timer->getY()};
 	std::shared_ptr <Timer> timer = std::make_shared<Timer>(screenWidth, screenHeight);  
+	std::pair<int,int> stopStartPos = {timer->getX() + timer->getBoxWidth() + 30, timer->getY()};
 	std::shared_ptr <ActionButton> startStop = std::make_shared<ActionButton>("Start/Stop", 50, 50, stopStartPos.first, stopStartPos.second);
+	std::vector<std::shared_ptr<TimeButton>> timeButtons;
 
 	//timer->getTimerLength();
 
 	InitWindow(screenWidth, screenHeight, "Class Timer");
 	SetTargetFPS(60);
 
-	BeginDrawing();
-		DrawWindow(BLUE, timer, startStop, timeButtons);
-	EndDrawing();
+	while (!WindowShouldClose())
+	{
+
+		BeginDrawing();
+			DrawWindow(BLUE, timer, startStop, timeButtons);
+		EndDrawing();
+	}
 	
 	return 0;
 }
