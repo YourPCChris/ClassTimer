@@ -20,17 +20,17 @@ class Timer
 		{
 			boxWidth = 100, boxHeight = 80;
 			boxX = screenWidth/2 - boxWidth/2, boxY = screenHeight/2 - boxHeight/2;
-			x = boxX;
+			x = boxX + boxWidth/2 - MeasureText(timeText.c_str(), 50)/2;
 			y = boxY;
 			timeEntered = false;
 		}			
-
-        void changeStartTime(double start) { startTime = start;}
 
 		void Draw() 
 		{
 			DrawRectangle(boxX, boxY, boxWidth, boxHeight, GRAY);
 			DrawRectangleLines(boxX, boxY, boxWidth, boxHeight, BLACK);
+            x = boxX + boxWidth/2 - MeasureText(timeText.c_str(), 50)/2;
+            boxWidth = MeasureText(timeText.c_str(), 50) + 20;
 			DrawText(timeText.c_str(), x, y, 50, BLACK);
 		}
 
@@ -64,9 +64,23 @@ class Timer
 			}
 		}
 
+        void changeStartTime(double start) { startTime = start;}
+        void changeTimerLength() { time = std::stoi(timeText);}
+        void changeTime(int newTime) { time = newTime;}
+        void clearTime()
+        {
+            time = 0;
+            timeText = "0";
+            elapsedTime = 0;
+        }
         void updateTimer()
         {
-            timeText = std::to_string((int)(time - GetTime()));
+            elapsedTime = GetTime() - startTime;
+            if (!(elapsedTime >= time)){
+                timeText = std::to_string((int)(time - elapsedTime));
+            }else{
+                clearTime();
+                }
         }
 
 		int getX() { return x;}
@@ -75,6 +89,7 @@ class Timer
 		int getBoxY() { return boxY;}
 		int getBoxWidth() { return boxWidth;}
 		int getBoxHeight() { return boxHeight;}
+        int getTime(){ return time;}
 			
 
 	private:
@@ -85,6 +100,7 @@ class Timer
 		int time;		
 		std::string timeText;
 		double startTime;
+        double elapsedTime;
 		bool timeEntered;
 };
 
@@ -129,20 +145,27 @@ class TimeButton : public Button
 		TimeButton(int newTime, int newWidth, int newHeight, int newX, int newY)
 		{	
 			time = newTime;
+            textTime = std::to_string(time);
 			width = newWidth;
 			height = newHeight;
 			x = newX;
 			y = newY;
 		}
+        int getTime() { return time;}
+        
+        void changeTime(int newTime) { time = newTime;}
 
 		void Draw() override
 		{
-			DrawRectangle(x, y, width, height, WHITE);
+			DrawRectangle(x, y, width, height, GRAY);
+            int textX = x + width/2 - MeasureText(textTime.c_str(), 20)/2;
+            int textY = y + (height/2) - (10);
+            DrawText(textTime.c_str(), textX, textY, 20, WHITE);
 		}
 
 	private:
 		int time;
-
+        std::string textTime;
 };
 
 class ActionButton : public Button
@@ -203,11 +226,15 @@ void DrawWindow(Color color, std::shared_ptr<Timer>& timer, std::shared_ptr<Acti
     }
 	timer->Draw();
 	//Time Buttons 
+    for (const auto& button : timeButtons)
+    {
+        button->Draw();
+    }
 	//Action Button
 	startStop->Draw();
 }
 
-void CheckClicks(std::shared_ptr<ActionButton>& stopStart, std::vector<std::shared_ptr<TimeButton>>& timeButtons)
+void CheckClicks(std::shared_ptr<ActionButton>& stopStart, std::vector<std::shared_ptr<TimeButton>>& timeButtons, std::shared_ptr<Timer>& timer)
 {
 	//std::cout << "Checking Clicks" << std::endl;
 	
@@ -222,17 +249,37 @@ void CheckClicks(std::shared_ptr<ActionButton>& stopStart, std::vector<std::shar
                         stopStart->changeStart(false);
                     }
                     else{
+                        timer->changeStartTime(GetTime());
                         stopStart->changeStart(true);
+                        timer->changeTimerLength();
                     }
+                    return;
 			}
 
 			for (const auto& button : timeButtons)
 			{
-				if (mousePos.x == button->getX() && mousePos.y == button->getY()){
-					std::cout << "Button Clicked" << std::endl;
-				}
+                if (CheckCollisionPointRec(mousePos, button->getRectangle())){
+                    //std::cout << "Time Button Clicked" << std::endl;
+                    if (button == timeButtons[0]){ timer->clearTime();}
+                    else{
+                        timer->changeTime(timer->getTime() + button->getTime());
+                    }
+                }
 			}
 	}
+}
+
+void makeTimeButtons(std::vector<std::shared_ptr<TimeButton>>& timeButtons, std::vector<int>& timeForButton)
+{
+    int buttonX = (GetScreenWidth()/15) + GetScreenWidth() / (timeForButton.size()+20);
+    int buttonY = GetScreenHeight() * 0.7;
+    int i = 0;
+
+    for (const auto& time : timeForButton)
+    {
+        ++i;
+        timeButtons.push_back(std::make_shared<TimeButton>(time, 50, 50, buttonX*i, buttonY));
+    }
 }
 
 
@@ -248,11 +295,13 @@ int main()
 	std::pair<int,int> stopStartPos = {timer->getX() + timer->getBoxWidth() + 30, timer->getY()};
 	std::shared_ptr <ActionButton> startStop = std::make_shared<ActionButton>("Start/Stop", 50, 50, stopStartPos.first, stopStartPos.second);
 	std::vector<std::shared_ptr<TimeButton>> timeButtons;
+    std::vector<int> timeForButton = {0, 5, 10, 20, 30, 60, 300, 600};
 
 
 	InitWindow(screenWidth, screenHeight, "Class Timer");
 	SetTargetFPS(60);
 
+    makeTimeButtons(timeButtons, timeForButton);
 	timer->getTimerLength(screenWidth, screenHeight);
 	startStop->changeWidth("Start/Stop");
 
@@ -260,7 +309,7 @@ int main()
 	{
 		BeginDrawing();
 			DrawWindow(BLUE, timer, startStop, timeButtons);
-			CheckClicks(startStop, timeButtons);
+			CheckClicks(startStop, timeButtons, timer);
 		EndDrawing();
 	}
 	
