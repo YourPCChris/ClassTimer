@@ -4,3 +4,10 @@ Graphical Class Timer
 
 raylib, C++ 
 
+
+
+Start Button Must be pressed before adding time
+
+Timer must be stoped and then started again after being zeroed/cleared 
+
+
