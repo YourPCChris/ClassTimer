@@ -29,19 +29,17 @@ class Timer
 		{
 			DrawRectangle(boxX, boxY, boxWidth, boxHeight, GRAY);
 			DrawRectangleLines(boxX, boxY, boxWidth, boxHeight, BLACK);
+
             x = boxX + boxWidth/2 - MeasureText(timeText.c_str(), 50)/2;
             boxWidth = MeasureText(timeText.c_str(), 50) + 20;
 			DrawText(timeText.c_str(), x, y, 50, BLACK);
 		}
 
-		void getTimerLength(int screenWidth, int screenheight)
+		void getTimerLength(int length)
 		{
 			while (!timeEntered)
 			{
-				try
-				{
-					std::cout << "Enter a timer length: " << std::endl;
-					std::cin >> time;
+                    time = length;
 					timeText = std::to_string(time);
 					
 					int textWidth = MeasureText(timeText.c_str(), 50);
@@ -55,12 +53,6 @@ class Timer
 					x = boxX + (boxWidth - textWidth)/2;
 					y = boxY + (boxHeight - 50)/2;
 					timeEntered = true;
-				}
-				catch(std::string e)
-				{
-					std::cout << "Enter a valid number please" << std::endl;
-					std::cout << "You entered " << e << std::endl;
-				}
 			}
 		}
 
@@ -236,15 +228,11 @@ void DrawWindow(Color color, std::shared_ptr<Timer>& timer, std::shared_ptr<Acti
 
 void CheckClicks(std::shared_ptr<ActionButton>& stopStart, std::vector<std::shared_ptr<TimeButton>>& timeButtons, std::shared_ptr<Timer>& timer)
 {
-	//std::cout << "Checking Clicks" << std::endl;
-	
 	if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)){
-			std::cout << "Mouse Clicked" << std::endl;
 			Vector2 mousePos= GetMousePosition();
 
 				//Check for rectangle collision on stop start button 
 			if (CheckCollisionPointRec(mousePos, stopStart->getRectangle())){
-					std::cout << "Start Stop Button clicked" << std::endl;
                     if (stopStart->getStart() == true){
                         stopStart->changeStart(false);
                     }
@@ -259,10 +247,10 @@ void CheckClicks(std::shared_ptr<ActionButton>& stopStart, std::vector<std::shar
 			for (const auto& button : timeButtons)
 			{
                 if (CheckCollisionPointRec(mousePos, button->getRectangle())){
-                    //std::cout << "Time Button Clicked" << std::endl;
-                    if (button == timeButtons[0]){ timer->clearTime();}
+                    if (button == timeButtons[0]){ timer->clearTime(); return;}
                     else{
                         timer->changeTime(timer->getTime() + button->getTime());
+                        return;
                     }
                 }
 			}
@@ -285,7 +273,7 @@ void makeTimeButtons(std::vector<std::shared_ptr<TimeButton>>& timeButtons, std:
 
 int main()
 {
-	std::cout << "We Ball" << std::endl;
+	//std::cout << "We Ball" << std::endl;
 
 	double startTime = GetTime();
 	const int screenWidth = 1000, screenHeight = 800;
@@ -302,7 +290,7 @@ int main()
 	SetTargetFPS(60);
 
     makeTimeButtons(timeButtons, timeForButton);
-	timer->getTimerLength(screenWidth, screenHeight);
+	timer->getTimerLength(0);
 	startStop->changeWidth("Start/Stop");
 
 	while (!WindowShouldClose())
