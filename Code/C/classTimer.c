@@ -86,12 +86,15 @@ void TimeButtonInit(TimeButton* timeButton)
 	timeButton->width = 50;
 	timeButton->height = 50;
 }
-void freeTimeButton(TimeButton* timeButton)
+void freeTimeButton(TimeButton* timeButtons)
 {
-	if (timeButton){
-		free(timeButton->timeText);
-		free(timeButton);
+	if (timeButtons){
+		for (int i = 0; i < 8; i++)
+		{
+			free(timeButtons[i].timeText);
+		}
 	}
+	free(timeButtons);
 }
 
 typedef struct
@@ -125,8 +128,8 @@ void freeTimer(Timer* timer);
 bool makeTimeButtons(TimeButton* timeButtons);
 void RunTimer(Screen* screen, Timer* timer, TimeButton* timeButtons, startStopButton* startStop);
 void addTime(Timer* timer, int time);
-void checkClicks(TimeButton* timeButtons, Timer* timer);
-void updateTimer(Timer* timer);
+void checkClicks(TimeButton* timeButtons, Timer* timer, startStopButton* startStop);
+void updateTimer(Timer* timer, startStopButton* startStop);
 void freeMemory(Screen* screen, Timer* timer, TimeButton* timeButtons, startStopButton* startStop);
 
 
@@ -211,25 +214,40 @@ void addTime(Timer* timer, int time)
 	}
 }
 
-void updateTime(Timer* timer)
+void updateTimer(Timer* timer, startStopButton* startStop)
 {
-	if (timer->timeEntered)
+	if (startStop->isRunning)
 	{
-		timer->time = timer->time - 1;
-		snprintf(timer->timeText, 99, "%d", timer->time);
-		timer->timeText[99] = '\0';
+		int elapsedTime = GetTime() - startStop->startTime;
+		if (timer->time <= elapsedTime)
+		{
+			timer->time = 0;
+			strncpy(timer->timeText, "0", 99);
+			timer->timeText[99] = '\0';
+			startStop->isRunning = false;
+		}else
+		{
+			int newTime = timer->time - elapsedTime;
+			snprintf(timer->timeText, 99, "%d", newTime);
+			timer->timeText[99] = '\0';
+		}
 	}
 }
+
 
 //Main Functions
 void RunTimer(Screen* screen, Timer* timer, TimeButton* timeButtons, startStopButton* startStop)
 {
 	if (ScreenInit(screen)){
-		TimerInit(timer, screen);
-		startStopButtonInit(startStop, timer);
+
 		InitWindow(screen->width, screen->height, screen->title);
 		SetTargetFPS(60);
-		makeTimeButtons(timeButtons);
+		TimerInit(timer, screen);
+		startStopButtonInit(startStop, timer);
+		if (!makeTimeButtons(timeButtons)){
+			printf("Memory allocation failed\n");
+			return;
+		}
 
 		while (!WindowShouldClose())
 		{
@@ -237,11 +255,12 @@ void RunTimer(Screen* screen, Timer* timer, TimeButton* timeButtons, startStopBu
 				ClearBackground(RAYWHITE);
 				DrawTimer(timer);
 				DrawStartStopButton(startStop);
-				checkClicks(timeButtons, timer);
+				checkClicks(timeButtons, timer, startStop);
 				for (int i = 0; i < 8; i++)
 				{
 					DrawTimeButton(&timeButtons[i]);
 				}
+				updateTimer(timer, startStop);
 			EndDrawing();
 		}
 		CloseWindow();
@@ -275,8 +294,24 @@ bool makeTimeButtons(TimeButton* timeButtons)
 	return true;
 }
 
-void checkClicks(TimeButton* timeButtons, Timer* timer)
+void checkClicks(TimeButton* timeButtons, Timer* timer, startStopButton* startStop)
 {
+	if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+	{
+		Vector2 mouse = GetMousePosition();
+		Rectangle rec = {startStop->x, startStop->y, startStop->width, startStop->height};
+		if (CheckCollisionPointRec(mouse, rec))
+		{
+			printf("Start/Stop Button Clicked\n");
+			startStop->isRunning = !startStop->isRunning;
+			if (!startStop->isRunning){startStop->startTime = GetTime();}
+			if (startStop->isRunning){
+				startStop->startTime = GetTime();
+				timer->time = atoi(timer->timeText);
+			}
+		}
+	}
+
 	for (int i = 0; i < 8; i++)
 	{
 		if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
