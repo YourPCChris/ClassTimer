@@ -92,7 +92,7 @@ class Timer
 		int time;		
 		std::string timeText;
 		double startTime;
-        double elapsedTime;
+		double elapsedTime;
 		bool timeEntered;
 };
 
@@ -137,7 +137,7 @@ class TimeButton : public Button
 		TimeButton(int newTime, int newWidth, int newHeight, int newX, int newY)
 		{	
 			time = newTime;
-            textTime = std::to_string(time);
+			textTime = std::to_string(time);
 			width = newWidth;
 			height = newHeight;
 			x = newX;
