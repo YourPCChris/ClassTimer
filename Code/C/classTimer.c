@@ -36,13 +36,6 @@ bool ScreenInit(Screen* screen)
 		return true;
 	}
 }
-void freeScreen(Screen* screen)
-{
-	if (screen){
-		free(screen->title);
-		free(screen);
-	}
-}
 
 typedef struct
 {
@@ -67,13 +60,6 @@ void TimerInit(Timer* timer , Screen* screen)
 	timer->timeText[99] = '\0';
 	timer->timeEntered = false;
 }
-void freeTimer(Timer* timer)
-{
-	if (timer){
-		free(timer->timeText);
-		free(timer);
-	}
-}
 
 typedef struct
 {
@@ -85,16 +71,6 @@ void TimeButtonInit(TimeButton* timeButton)
 {
 	timeButton->width = 50;
 	timeButton->height = 50;
-}
-void freeTimeButton(TimeButton* timeButtons)
-{
-	if (timeButtons){
-		for (int i = 0; i < 8; i++)
-		{
-			free(timeButtons[i].timeText);
-		}
-	}
-	free(timeButtons);
 }
 
 typedef struct
@@ -112,19 +88,11 @@ void startStopButtonInit(startStopButton* startStopButton, Timer* timer)
 	startStopButton->height = 50;
 	startStopButton->isRunning = false;
 }
-void freeStartStopButton(startStopButton* startStopButton)
-{
-	if (startStopButton){
-		free(startStopButton);
-	}
-}
 
 //Prototypes
 bool ScreenInit(Screen* screen);
-void freeScreen(Screen* screen);
 void TimerInit(Timer* timer, Screen* screen);
 void DrawTimer(Timer* timer);
-void freeTimer(Timer* timer);
 bool makeTimeButtons(TimeButton* timeButtons);
 void RunTimer(Screen* screen, Timer* timer, TimeButton* timeButtons, startStopButton* startStop);
 void addTime(Timer* timer, int time);
@@ -330,8 +298,25 @@ void checkClicks(TimeButton* timeButtons, Timer* timer, startStopButton* startSt
 
 void freeMemory(Screen* screen, Timer* timer, TimeButton* timeButtons, startStopButton* startStop)
 {
-	freeScreen(screen);
-	freeTimer(timer);
-	freeTimeButton(timeButtons);
-	freeStartStopButton(startStop);
+	//freeScreen(screen);
+	if (screen){
+		free(screen->title);
+		free(screen);
+	}
+	//freeTimer(timer);
+	if (timer){
+		free(timer->timeText);
+		free(timer);
+	}
+	//freeTimeButton(timeButtons);
+	if (timeButtons){
+		for (int i = 0; i < 8; i++)
+		{
+			free(timeButtons[i].timeText);
+		}
+	}
+	//freeStartStopButton(startStop);
+	if (startStop){
+		free(startStop);
+	}
 }
